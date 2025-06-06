@@ -1,0 +1,17 @@
+git add database.py
+git commit -m "Add database connection setup using SQLite and SQLAlchemy"
+
+git add models.py
+git commit -m "Define Contact model with SQLAlchemy"
+
+git add main.py
+git commit -m "Create /identify endpoint with identity reconciliation logic"
+
+git add test_api.py
+git commit -m "Add test cases for /identify endpoint using FastAPI TestClient"
+
+git add requirements.txt
+git commit -m "Add requirements.txt with dependencies"
+
+git add README.md
+git commit -m "Add README with setup, API usage, and deployment instructions"
