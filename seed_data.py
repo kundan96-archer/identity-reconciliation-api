@@ -21,7 +21,7 @@ def seed_data():
             deletedAt=None
         ),
         Contact(
-            phoneNumber="012345",
+            phoneNumber="234567",
             email="mcfly@hillvalley.edu",
             linkPrecedence="primary",
             linkedId=None,
