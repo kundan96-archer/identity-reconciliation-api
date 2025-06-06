@@ -1,36 +1,39 @@
-# seed_data.py
-from database import SessionLocal, engine
-from models import Base, Contact
-from datetime import datetime
+from sqlalchemy.orm import Session
+from database import SessionLocal  # your DB session factory
+from models import Contact
+from datetime import datetime, timezone
 
-# Create the database tables
-Base.metadata.create_all(bind=engine)
+def seed_data():
+    db = SessionLocal()
+    # Clear old data
+    db.query(Contact).delete()
+    db.commit()
 
-# Create a session
-db = SessionLocal()
+    now = datetime.now(timezone.utc)  # timezone-aware current UTC time
 
-# Sample contact data
-contacts = [
-    Contact(
-        phoneNumber="123456",
-        email="lorraine@hillvalley.edu",
-        linkPrecedence="primary",
-        createdAt=datetime.utcnow(),
-        updatedAt=datetime.utcnow(),
-    ),
-    Contact(
-        phoneNumber="123456",
-        email="mcfly@hillvalley.edu",
-        linkPrecedence="secondary",
-        linkedId=1,
-        createdAt=datetime.utcnow(),
-        updatedAt=datetime.utcnow(),
-    ),
-]
+    contacts = [
+        Contact(
+            phoneNumber="123456",
+            email="lorraine@hillvalley.edu",
+            linkPrecedence="primary",
+            createdAt=now,
+            updatedAt=now,
+            deletedAt=None
+        ),
+        Contact(
+            phoneNumber="012345",
+            email="mcfly@hillvalley.edu",
+            linkPrecedence="primary",
+            linkedId=None,
+            createdAt=now,
+            updatedAt=now,
+            deletedAt=None
+        ),
+    ]
 
-# Add and commit contacts
-db.add_all(contacts)
-db.commit()
-db.close()
+    db.add_all(contacts)
+    db.commit()
+    db.close()
 
-print("✅ Sample contacts added.")
+if __name__ == "__main__":
+    seed_data()

@@ -21,6 +21,8 @@ class Contact(Base):
     updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     deletedAt = Column(DateTime, nullable=True)
 
+
+#######
 def get_or_create_contact(db: Session, email: str | None, phone: str | None):
     matched = db.query(Contact).filter(
         or_(Contact.email == email, Contact.phoneNumber == phone)
@@ -39,45 +41,67 @@ def get_or_create_contact(db: Session, email: str | None, phone: str | None):
             "secondaryContactIds": []
         }
 
-    # Gather all related contacts
-    contact_ids = set()
-    for m in matched:
-        if m.linkPrecedence == LinkPrecedence.PRIMARY:
-            contact_ids.add(m.id)
-        elif m.linkedId:
-            contact_ids.add(m.linkedId)
+    # Identify all related contacts
+    all_contacts = set(matched)
+    to_check = list(matched)
 
-    primary_id = min(contact_ids)
-    all_related = db.query(Contact).filter(
-        (Contact.id == primary_id) | (Contact.linkedId == primary_id)
-    ).all()
+    while to_check:
+        contact = to_check.pop()
+        if contact.linkPrecedence == LinkPrecedence.SECONDARY and contact.linkedId:
+            related = db.query(Contact).filter(Contact.id == contact.linkedId).all()
+        else:
+            related = db.query(Contact).filter(Contact.linkedId == contact.id).all()
+        for r in related:
+            if r not in all_contacts:
+                all_contacts.add(r)
+                to_check.append(r)
 
-    emails = []
-    phones = []
-    secondary_ids = []
+    all_contacts = list(all_contacts)
 
-    for contact in all_related:
-        if contact.email and contact.email not in emails:
-            emails.append(contact.email)
-        if contact.phoneNumber and contact.phoneNumber not in phones:
-            phones.append(contact.phoneNumber)
-        if contact.id != primary_id:
-            secondary_ids.append(contact.id)
+    # Identify all primaries
+    primaries = [c for c in all_contacts if c.linkPrecedence == LinkPrecedence.PRIMARY]
 
-    # Add new secondary if info not matched
-    existing = any(c.email == email and c.phoneNumber == phone for c in all_related)
+    # Select earliest primary
+    true_primary = min(primaries, key=lambda c: c.createdAt)
+    primary_id = true_primary.id
+
+    # Rewire any other primary to become secondary
+    for p in primaries:
+        if p.id != primary_id:
+            p.linkPrecedence = LinkPrecedence.SECONDARY
+            p.linkedId = primary_id
+            p.updatedAt = datetime.utcnow()
+            db.add(p)
+
+    # Update all secondaries to point to the true primary
+    for c in all_contacts:
+        if c.linkPrecedence == LinkPrecedence.SECONDARY and c.linkedId != primary_id:
+            c.linkedId = primary_id
+            c.updatedAt = datetime.utcnow()
+            db.add(c)
+
+    db.commit()
+
+    # Check if contact exists already (partial match)
+    existing = any(
+        (email and c.email == email) or (phone and c.phoneNumber == phone)
+        for c in all_contacts
+    )
+
     if not existing:
+        # Insert new secondary
         new_secondary = Contact(
             email=email, phoneNumber=phone, linkedId=primary_id, linkPrecedence=LinkPrecedence.SECONDARY
         )
         db.add(new_secondary)
         db.commit()
         db.refresh(new_secondary)
-        secondary_ids.append(new_secondary.id)
-        if new_secondary.email and new_secondary.email not in emails:
-            emails.append(new_secondary.email)
-        if new_secondary.phoneNumber and new_secondary.phoneNumber not in phones:
-            phones.append(new_secondary.phoneNumber)
+        all_contacts.append(new_secondary)
+
+    # Build the response
+    emails = list({c.email for c in all_contacts if c.email})
+    phones = list({c.phoneNumber for c in all_contacts if c.phoneNumber})
+    secondary_ids = [c.id for c in all_contacts if c.id != primary_id]
 
     return {
         "primaryContatctId": primary_id,
@@ -85,3 +109,4 @@ def get_or_create_contact(db: Session, email: str | None, phone: str | None):
         "phoneNumbers": phones,
         "secondaryContactIds": secondary_ids,
     }
+
