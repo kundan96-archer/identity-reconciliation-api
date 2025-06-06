@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from database import init_db, get_db
 from models import Contact, get_or_create_contact
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 
