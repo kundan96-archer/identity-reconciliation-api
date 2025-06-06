@@ -10,7 +10,7 @@ This project includes a `seed_data.py` script to pre-populate the database with 
 - Adds realistic contact entries with both `primary` and `secondary` linkages.
 - Useful for quickly testing the `/identify` endpoint behavior.
 
-# 🚀 How to Run
+## 🚀 How to Run
 
 Before you seed the data, ensure:
 1. Your PostgreSQL (or SQLite) database is set up and the tables are created using the models.
