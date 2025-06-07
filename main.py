@@ -24,6 +24,10 @@ class IdentifyRequest(BaseModel):
     email: str | None = None
     phoneNumber: str | None = None
 
+@app.get("/")
+def read_root():
+    return {"message": "API is running"}
+
 @app.post("/identify")
 def identify(payload: IdentifyRequest, db: Session = Depends(get_db)):
     if not payload.email and not payload.phoneNumber:
