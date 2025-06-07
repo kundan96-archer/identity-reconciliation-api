@@ -26,6 +26,15 @@ python seed_data.py
 
 **POST** `/identify`
 
+# Hosted Endpoint
+
+The `/identify` API endpoint is live at:
+
+🔗 https://identity-reconciliation-api-e3y9.onrender.com
+
+📝 **Request Type**: POST  
+📦 **Request Body**: JSON (not form-data)
+
 #### Request Body (JSON)
 ```json
 {
@@ -33,19 +42,4 @@ python seed_data.py
   "phoneNumber": "0123456789"
 }
 
-## Hosted Endpoint
-
-The `/identify` API endpoint is live at:
-
-🔗 https://your-app-name.onrender.com/identify
-
-📝 **Request Type**: POST  
-📦 **Request Body**: JSON (not form-data)
-
-### Example Payload:
-```json
-{
-  "email": "mcfly@hillvalley.edu",
-  "phoneNumber": "123456"
-}
 
